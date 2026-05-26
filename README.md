@@ -55,6 +55,101 @@ Demo (placeholder):
 
 ---
 
+## Clean Project Overview
+
+This repository contains a focused, production-minded authentication example built for clarity and extendability. The README below is written to help you (or a teammate) quickly understand architecture, run the app locally, and extend it safely.
+
+Key design goals:
+
+- Minimal but secure auth primitives (JWT access + server-side refresh rotation)
+- Clear separation: frontend handles UX & short-lived token; backend owns identity and token lifecycle
+- Small surface area to adapt or ship as a starter kit
+
+---
+
+## Features
+
+- Email/password registration and login
+- OAuth2 sign-in (Google, GitHub) routed via backend
+- JWT access tokens + rotating refresh tokens stored server-side
+- Dashboard with dynamic stats (Total Logins, Security Score, Active Sessions)
+- Tailwind + modern React patterns (Zustand for auth store)
+
+---
+
+## Folder Structure (high level)
+
+- auth-backend/ — Spring Boot service
+  - src/main/java/.../controllers — REST controllers (AuthController, UserController)
+  - src/main/java/.../services — business logic and JWT/Cookie helpers
+  - src/main/java/.../config — Security, OAuth handlers, filters
+- auth-front/ — React + Vite frontend
+  - src/pages — routed pages (Login, Signup, Dashboard)
+  - src/services — API wrappers (AuthService)
+  - src/config — apiClient axios instance with refresh handling
+
+---
+
+## Project Flow (detailed step-by-step)
+
+1. User signs up or logs in on the frontend.
+2. Frontend calls `POST /api/v1/auth/login` (or OAuth redirects to backend OAuth endpoint).
+3. Backend verifies credentials (or exchanges OAuth code), creates a refresh-token DB row, and returns an access token (JWT) plus a refresh cookie (HTTP-only).
+4. Frontend stores the access token in memory and user profile in Zustand.
+5. Frontend uses `apiClient` to call protected APIs, attaching `Authorization: Bearer <token>`.
+6. When an API responds 401, `apiClient` uses `POST /api/v1/auth/refresh` to rotate refresh tokens and obtain a new access token.
+7. Dashboard reads `GET /api/v1/users/{userId}/stats` to render dynamic tiles — the backend computes these via refresh-token counts and a security heuristic.
+
+### Sequence diagram (request flow)
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend (React)
+    participant API as Backend (Spring Boot)
+    participant DB as Database
+
+    FE->>API: POST /api/v1/auth/login (credentials)
+    API->>DB: validate user, create refresh token row
+    API-->>FE: 200 OK { accessToken } + set-cookie refresh
+    FE->>API: GET /api/v1/users/{id}/stats (Authorization: Bearer ...)
+    API->>DB: count refresh tokens for user
+    API-->>FE: 200 OK { totalLogins, securityScore, activeSessions }
+```
+
+---
+
+## UX & Animation Notes (how to make README/UX feel alive)
+
+- Use a short animated GIF (3–6s) showing login -> dashboard flow as the hero media. I added a placeholder at the top; provide a real GIF and I will embed it.
+- For micro-interactions in the app: show subtle fades on dashboard tiles, use a staggered entrance (Framer Motion is already included).
+- Consider a small Lottie animation on the login success page for polish (lightweight JSON animations).
+
+---
+
+## Screenshots & Demo
+
+Add real screenshots or a GIF here to showcase the flow. If you want, I can record a 10–15s demo locally and commit an optimized GIF.
+
+---
+
+## Quick Checklist for contributors
+
+- [ ] Run backend and ensure MySQL is available (or use in-memory for quick dev)
+- [ ] Run frontend and confirm login/refresh flow works
+- [ ] Add tests for any new public endpoint
+
+---
+
+If you'd like, I can (pick one):
+
+1. Record and add a demo GIF and screenshot set, or
+2. Add a small `.github/workflows/ci.yml` so the CI badge becomes active, or
+3. Improve README styling with images laid out in a two-column grid (requires committing assets).
+
+Tell me which option and I will implement it.
+
+---
+
 ## Table Of Contents
 
 - [Highlights](#highlights)
