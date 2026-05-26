@@ -53,6 +53,72 @@ Demo (placeholder):
 
 ![demo-gif](https://user-images.githubusercontent.com/placeholder/demo.gif)
 
+---
+
+## Table Of Contents
+
+- [Highlights](#highlights)
+- [Quick Start](#quick-start)
+- [Project Flow](#project-flow)
+- [GitHub Workflow (CI)](#github-workflow-ci)
+- [Important Endpoints](#important-endpoints)
+- [Recent changes (2026-05-26)](#recent-changes-2026-05-26)
+
+---
+
+## Project Flow
+
+Compact, GitHub-friendly flow (no curly braces in node labels so Mermaid renders correctly on GitHub):
+
+```mermaid
+flowchart TB
+  subgraph Public
+    H[Home /]
+    S[Signup /signup]
+    L[Login /login]
+  end
+
+  subgraph Frontend
+    N[Navbar]
+    Z[Zustand Store]
+    AX[Axios apiClient]
+  end
+
+  subgraph Backend
+    R1[POST /api/v1/auth/register]
+    R2[POST /api/v1/auth/login]
+    R3[POST /api/v1/auth/refresh]
+    U1[GET /api/v1/users/email/:email]
+    U2[GET /api/v1/users/:id/stats]
+  end
+
+  Public --> Frontend
+  Frontend --> AX
+  AX --> Backend
+  R2 --> JWT[JWT access token]
+  R3 --> JWT
+  U1 --> Frontend
+  U2 --> Frontend
+```
+
+---
+
+## GitHub Workflow (CI)
+
+You can enable a simple CI pipeline to run backend and frontend checks on PRs. Example steps for `.github/workflows/ci.yml`:
+
+1. Checkout repository
+2. Set up JDK 17 and run `./mvnw -DskipTests=false test`
+3. Set up Node.js and run `npm ci && npm run build`
+4. Optionally run ESLint and unit tests
+
+Example badge to add after creating the workflow:
+
+```
+[![CI](https://github.com/Rahul-18r/Sprin-Auth-webApp/actions/workflows/ci.yml/badge.svg)](https://github.com/Rahul-18r/Sprin-Auth-webApp/actions)
+```
+
+---
 
 ## Architecture (short)
 
