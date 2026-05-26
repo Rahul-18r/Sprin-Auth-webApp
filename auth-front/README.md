@@ -1,79 +1,45 @@
-# React + TypeScript + Vite
+# auth-front — React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Lightweight frontend for the Auth App built with React 19, TypeScript, Vite and Tailwind.
 
-Currently, two official plugins are available:
+## Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-
-## Recent Changes (2026-05-26)
-
-- Dashboard stats are now fetched from the backend and displayed in `src/pages/users/Userhome.tsx`.
-- API wrapper `getUserStats` was added to `src/services/AuthService.ts` to call `/api/v1/users/{userId}/stats`.
-- The frontend expects the backend to expose the stats endpoint and for the user to be authenticated (access token present). If you see a `403 Forbidden`, ensure the app is logged in and the backend is running.
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd auth-front
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Dev server runs at `http://localhost:5173` by default.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## What this frontend does
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Provides login and signup screens (email/password)
+- OAuth2 buttons (Google / GitHub) that redirect to backend OAuth flow
+- Stores access token in-memory and user info in a Zustand store
+- Calls backend APIs via `src/config/apiClient.ts` which handles token refresh
+- Displays a protected Dashboard and Profile pages after authentication
+
+## Dashboard: dynamic stats
+
+The dashboard fetches user stats from the backend endpoint:
+
 ```
+GET /api/v1/users/{userId}/stats
+```
+
+The frontend wrapper `src/services/AuthService.ts` exposes `getUserStats` used by `src/pages/users/Userhome.tsx`.
+
+If you see `403 Forbidden` when loading the dashboard, ensure that:
+
+1. Backend is running on `http://localhost:8083`.
+2. The user is signed in and the access token is available (check DevTools → Application / Local Storage and the network Authorization header).
+
+## Useful commands
+
+- `npm run dev` — start dev server
+- `npm run build` — production build
+
+---
+
+If you'd like, I can add a short demo GIF, deployment notes, or a sample `.env.example` for both apps.

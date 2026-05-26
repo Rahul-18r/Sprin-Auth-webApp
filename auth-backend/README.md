@@ -153,3 +153,24 @@ This design keeps the frontend simple and the backend secure:
 * OAuth2 and password login both end up in the same user model
 * the dashboard and profile pages can reuse the same user payload
 
+---
+
+## Quick Start (run backend locally)
+
+On Windows:
+
+```powershell
+cd auth-backend
+mvnw.cmd spring-boot:run
+```
+
+On Unix/macOS:
+
+```bash
+cd auth-backend
+./mvnw spring-boot:run
+```
+
+The backend uses the `dev` profile by default and listens on port `8083`.
+
+

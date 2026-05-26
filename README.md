@@ -43,6 +43,17 @@ By default the backend listens on `http://localhost:8083` and the frontend on `h
 
 ---
 
+## Badges & Demo
+
+![Release](https://img.shields.io/badge/release-main-blue)
+![Java](https://img.shields.io/badge/java-17-informational)
+![Frontend](https://img.shields.io/badge/frontend-React%2BTypeScript-61DBFB)
+
+Demo (placeholder):
+
+![demo-gif](https://user-images.githubusercontent.com/placeholder/demo.gif)
+
+
 ## Architecture (short)
 
 - Frontend holds the short-lived access token in memory and user profile in a Zustand store.
