@@ -4,6 +4,11 @@
 
 Rahul
 
+## Runtime Versions
+
+* Java 17
+* MySQL 8.x-compatible local database
+
 ## Overview
 
 This is a full-stack authentication app with a React + Vite frontend and a Spring Boot backend. It supports email/password registration and login, Google and GitHub OAuth2 login, JWT-based sessions, token refresh, and a protected dashboard with a profile section.
