@@ -1,22 +1,26 @@
 package com.substring.auth.app.auth.services.impl;
 
-import com.substring.auth.app.auth.config.AppConstants;
-import com.substring.auth.app.auth.payload.UserDto;
-import com.substring.auth.app.auth.entities.Provider;
-import com.substring.auth.app.auth.entities.Role;
-import com.substring.auth.app.auth.entities.User;
-import com.substring.auth.app.exceptions.ResourceNotFoundException;
-import com.substring.auth.app.auth.helpers.UserHelper;
-import com.substring.auth.app.auth.repositories.RoleRepository;
-import com.substring.auth.app.auth.repositories.UserRepository;
-import com.substring.auth.app.auth.services.UserService;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import java.time.Instant;
+import java.util.UUID;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.UUID;
+import com.substring.auth.app.auth.config.AppConstants;
+import com.substring.auth.app.auth.entities.Provider;
+import com.substring.auth.app.auth.entities.Role;
+import com.substring.auth.app.auth.entities.User;
+import com.substring.auth.app.auth.helpers.UserHelper;
+import com.substring.auth.app.auth.payload.UserDto;
+import com.substring.auth.app.auth.payload.UserStats;
+import com.substring.auth.app.auth.repositories.RefreshTokenRepository;
+import com.substring.auth.app.auth.repositories.RoleRepository;
+import com.substring.auth.app.auth.repositories.UserRepository;
+import com.substring.auth.app.auth.services.UserService;
+import com.substring.auth.app.exceptions.ResourceNotFoundException;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
 
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     @Transactional
@@ -103,5 +108,14 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(user -> modelMapper.map(user, UserDto.class))
                 .toList();
+    }
+
+    @Override
+    public UserStats getUserStats(String userId) {
+        var uId = UserHelper.parseUUID(userId);
+        long totalLogins = refreshTokenRepository.countByUser_Id(uId);
+        long activeSessions = refreshTokenRepository.countByUser_IdAndRevokedFalseAndExpiresAtAfter(uId, Instant.now());
+        int securityScore = Math.max(0, Math.min(100, 100 - (int) activeSessions * 2));
+        return new UserStats((int) totalLogins, securityScore, (int) activeSessions);
     }
 }

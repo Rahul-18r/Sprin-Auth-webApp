@@ -141,3 +141,12 @@ The frontend runs on port `5173` by default.
 * Refresh tokens are rotated on refresh.
 * The profile page currently focuses on display and UI actions, not a completed save API.
 * The home page is implemented in `auth-front/src/components/home/FuturisticAuthHome.tsx`.
+
+## Recent Changes (2026-05-26)
+
+- Added a new backend endpoint `GET /api/v1/users/{userId}/stats` which returns JSON: `{ "totalLogins": number, "securityScore": number, "activeSessions": number }`.
+- Frontend now fetches the stats and renders them on the dashboard; see `auth-front/src/pages/users/Userhome.tsx` and `auth-front/src/services/AuthService.ts`.
+- Backend implements `UserStats` DTO and counts refresh-token records to compute `totalLogins` and `activeSessions`; also adds a simple heuristic for `securityScore`.
+- Security config updated so authenticated users can fetch their own `/users/{id}/stats` endpoint; admin-restricted routes remain protected.
+
+Build note: Backend compiled successfully after these changes.

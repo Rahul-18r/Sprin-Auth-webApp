@@ -118,6 +118,16 @@ DB_PASSWORD=root
 | `PUT` | `/api/v1/users/{userId}` | Update a user |
 | `DELETE` | `/api/v1/users/{userId}` | Delete a user |
 
+### New endpoint (2026-05-26)
+
+| `GET` | `/api/v1/users/{userId}/stats` | Returns a small dashboard payload for the user: `totalLogins`, `securityScore`, `activeSessions`. Authenticated users may fetch their own stats; admins retain full access. |
+
+Notes:
+
+- `totalLogins` is computed from the count of refresh-token records for the user.
+- `activeSessions` is the count of non-revoked refresh tokens that haven't expired.
+- `securityScore` is a simple heuristic value currently computed server-side.
+
 ## Google OAuth callback
 
 ```text

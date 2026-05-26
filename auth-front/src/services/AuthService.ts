@@ -31,6 +31,16 @@ export const getCurrentUser = async (emailId: string | undefined) => {
   return response.data;
 };
 
+//get user stats for dashboard
+export const getUserStats = async (userId: string | undefined) => {
+  const response = await apiClient.get(`/users/${userId}/stats`);
+  return response.data as {
+    totalLogins: number;
+    securityScore: number;
+    activeSessions: number;
+  };
+};
+
 //refresh token
 
 export const refreshToken = async () => {

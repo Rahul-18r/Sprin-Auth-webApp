@@ -1,6 +1,7 @@
 package com.substring.auth.app.auth.services;
 
 import com.substring.auth.app.auth.payload.UserDto;
+import com.substring.auth.app.auth.payload.UserStats;
 
 public interface UserService {
 
@@ -23,6 +24,9 @@ public interface UserService {
     Iterable<UserDto> getAllUsers();
 
     // user service se related __
+
+    //get user stats for dashboard
+    UserStats getUserStats(String userId);
 
 
 }

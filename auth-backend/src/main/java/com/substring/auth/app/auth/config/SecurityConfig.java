@@ -1,12 +1,10 @@
 package com.substring.auth.app.auth.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.substring.auth.app.dtos.ApiError;
-import io.jsonwebtoken.lang.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -25,7 +23,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.substring.auth.app.dtos.ApiError;
+
+import io.jsonwebtoken.lang.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -47,10 +48,11 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable).cors(Customizer.withDefaults()).sessionManagement(sm -> sm.
                         sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeHttpRequests ->
-                        authorizeHttpRequests.requestMatchers(AppConstants.AUTH_PUBLIC_URLS).permitAll()
-                                .requestMatchers(AppConstants.AUTH_ADMIN_URLS).hasRole(AppConstants.ADMIN_ROLE)
-                                .requestMatchers(AppConstants.AUTH_GUEST_URLS).hasRole(AppConstants.GUEST_ROLE)
-                                .anyRequest().authenticated()).oauth2Login(oauth2 -> oauth2.successHandler(successHandler).failureHandler(null)).logout(AbstractHttpConfigurer::disable).exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, e) -> {
+                    authorizeHttpRequests.requestMatchers(AppConstants.AUTH_PUBLIC_URLS).permitAll()
+                        .requestMatchers(AppConstants.AUTH_USER_URLS).authenticated()
+                        .requestMatchers(AppConstants.AUTH_ADMIN_URLS).hasRole(AppConstants.ADMIN_ROLE)
+                        .requestMatchers(AppConstants.AUTH_GUEST_URLS).hasRole(AppConstants.GUEST_ROLE)
+                        .anyRequest().authenticated()).oauth2Login(oauth2 -> oauth2.successHandler(successHandler).failureHandler(null)).logout(AbstractHttpConfigurer::disable).exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, e) -> {
                     //error message
 //                    e.printStackTrace();
                     response.setStatus(401);

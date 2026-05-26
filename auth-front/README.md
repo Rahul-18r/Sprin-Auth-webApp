@@ -17,6 +17,12 @@ If you are developing a production application, we recommend updating the config
 
 ```js
 export default defineConfig([
+
+## Recent Changes (2026-05-26)
+
+- Dashboard stats are now fetched from the backend and displayed in `src/pages/users/Userhome.tsx`.
+- API wrapper `getUserStats` was added to `src/services/AuthService.ts` to call `/api/v1/users/{userId}/stats`.
+- The frontend expects the backend to expose the stats endpoint and for the user to be authenticated (access token present). If you see a `403 Forbidden`, ensure the app is logged in and the backend is running.
   globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],

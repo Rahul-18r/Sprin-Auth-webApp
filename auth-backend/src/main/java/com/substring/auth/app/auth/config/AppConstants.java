@@ -18,6 +18,11 @@ public class AppConstants {
 
     };
 
+    // endpoints accessible to the authenticated user (self) without ADMIN role
+    public static final String[] AUTH_USER_URLS = {
+            "/api/v1/users/*/stats"
+    };
+
     public static final String ADMIN_ROLE = "ADMIN";
     public static final String GUEST_ROLE = "GUEST";
 
