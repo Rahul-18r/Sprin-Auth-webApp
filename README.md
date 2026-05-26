@@ -161,42 +161,109 @@ Tell me which option and I will implement it.
 
 ---
 
-## Project Flow
+## Project Flow — Expanded
 
-Compact, GitHub-friendly flow (no curly braces in node labels so Mermaid renders correctly on GitHub):
+This section expands the previously compact flow into several focused flows so you can quickly understand how the pieces interact. Each subsection links the conceptual flow to the files that implement it.
+
+### 1) High-level flow
 
 ```mermaid
-flowchart TB
-  subgraph Public
-    H[Home /]
-    S[Signup /signup]
-    L[Login /login]
-  end
-
-  subgraph Frontend
-    N[Navbar]
-    Z[Zustand Store]
-    AX[Axios apiClient]
-  end
-
-  subgraph Backend
-    R1[POST /api/v1/auth/register]
-    R2[POST /api/v1/auth/login]
-    R3[POST /api/v1/auth/refresh]
-    U1[GET /api/v1/users/email/:email]
-    U2[GET /api/v1/users/:id/stats]
-  end
+flowchart LR
+  Public[Public pages: Home, Login, Signup]
+  Frontend[Frontend (React + Vite)]
+  Backend[Backend (Spring Boot)]
+  DB[Database (MySQL)]
 
   Public --> Frontend
-  Frontend --> AX
-  AX --> Backend
-  R2 --> JWT[JWT access token]
-  R3 --> JWT
-  U1 --> Frontend
-  U2 --> Frontend
+  Frontend --> Backend
+  Backend --> DB
 ```
 
+### 2) Authentication request flow (sequence)
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant API as Backend
+    participant DB as Database
+
+    Note over FE: User submits credentials (email + password)
+    FE->>API: POST /api/v1/auth/login { email, password }
+    API->>DB: verify user (findByEmail + password check)
+    API->>DB: create RefreshToken row
+    API-->>FE: 200 OK, { accessToken } + Set-Cookie: refresh
+    Note over FE: Store accessToken in memory; cookie is httpOnly
+```
+
+Files: `auth-backend/src/main/java/.../controllers/AuthController.java`, `.../services/impl/JwtService.java`, `.../entities/RefreshToken.java`.
+
+### 3) Token refresh (transparent to user)
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend (apiClient)
+    participant API as Backend
+    participant DB as Database
+
+    FE->>API: Protected request w/ Authorization: Bearer <expired>
+    API-->>FE: 401 Unauthorized
+    FE->>API: POST /api/v1/auth/refresh (cookie sent automatically)
+    API->>DB: validate refresh token, check revoked/expiry
+    API->>DB: revoke old refresh token, create new one
+    API-->>FE: 200 OK { accessToken } + Set-Cookie: new refresh
+    FE->>API: original request retried with new token
+```
+
+Files: `auth-backend/src/main/java/.../controllers/AuthController.java`, `.../repositories/RefreshTokenRepository.java`, `auth-front/src/config/apiClient.ts` (interceptors and retry logic).
+
+### 4) OAuth (Google/GitHub) flow
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant API as Backend
+    participant OAuth as Provider (Google/GitHub)
+
+    Browser->>API: GET /oauth2/authorize/{provider}
+    API->>OAuth: Redirect user to provider consent page
+    OAuth-->>Browser: Redirect back to API /login/oauth2/code/{provider} with code
+    Browser->>API: GET /login/oauth2/code/{provider}?code=...
+    API->>OAuth: Exchange code for user info
+    API->>DB: Create or fetch local User; create refresh-token row
+    API-->>Browser: Redirect to frontend `/oauth/success` (sets refresh cookie + token)
+```
+
+Files: `auth-backend/src/main/java/.../config/OAuth2SuccessHandler.java`, Spring Security config in `SecurityConfig.java`.
+
+### 5) Dashboard data flow (how stats are computed)
+
+```mermaid
+flowchart LR
+  UserDB[RefreshToken table]
+  Service[UserService.getUserStats]
+  API[UserController.getUserStats]
+  Frontend[Userhome.tsx]
+
+  UserDB --> Service
+  Service --> API
+  API --> Frontend
+```
+
+Computation notes:
+- `totalLogins` = `count(refresh_tokens WHERE user_id = X)`
+- `activeSessions` = `count(refresh_tokens WHERE user_id = X AND revoked=false AND expiresAt > now)`
+- `securityScore` = heuristic (e.g., 100 - activeSessions*2, clamped 0-100)
+
+Files: `auth-backend/src/main/java/.../services/impl/UserServiceImpl.java`, `.../repositories/RefreshTokenRepository.java`, `auth-front/src/pages/users/Userhome.tsx`.
+
 ---
+
+This expanded flow should make the interactions clear and provide direct references to the implementation files. If you want the diagrams to appear larger, I can:
+
+1. Break diagrams into individual labeled images (SVG/PNG) and embed them at larger pixel size, or
+2. Add an animated SVG walkthrough exported from a design tool and embed it as a hero demo.
+
+Which visual approach do you prefer? Images (SVG) for crisp scaling, or an animated GIF / short MP4 for a demo? 
 
 ## GitHub Workflow (CI)
 
