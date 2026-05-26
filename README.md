@@ -1,264 +1,202 @@
-# 🔐 Full Stack Authentication App — React + Vite + Spring Boot
+# Auth App
 
-A complete **authentication system** built using **React (Vite)** on the frontend and **Spring Boot** on the backend.  
-Supports **JWT-based authentication** with **username/password login**, as well as **Google** and **GitHub OAuth2 login**.
+## Author
 
-Developed by Rahul only.
+Rahul
 
-\---
+## Overview
 
-## 🧱 Tech Stack
+This is a full-stack authentication app with a React + Vite frontend and a Spring Boot backend. It supports email/password registration and login, Google and GitHub OAuth2 login, JWT-based sessions, token refresh, and a protected dashboard with a profile section.
 
-### 🖥️ Frontend
+The repository is split into two apps:
 
-* React (Vite)
-* Tailwind CSS
+* [auth-backend](auth-backend)
+* [auth-front](auth-front)
+
+## Tech Stack
+
+### Frontend
+
+* React 19
+* Vite
+* TypeScript
+* React Router
+* Zustand
 * Axios
-* React Router DOM
-* ShadCN UI (optional)
+* Framer Motion
+* Tailwind CSS and shadcn/ui components
 
-### ⚙️ Backend
+### Backend
 
-* Spring Boot 3.x
-* Spring Security 6.x
-* Spring Data JPA (MySQL)
-* OAuth2 Client (Google, GitHub)
-* JWT Authentication
-* Lombok + HikariCP
+* Spring Boot 3
+* Spring Security
+* Spring Data JPA
+* JWT access and refresh tokens
+* OAuth2 login with Google and GitHub
+* MySQL
 
-\---
+## Actual Project Flow
 
-## Screenshots
-
-### Home page
-
-!\[Homepage](./screenshots/sc1.png)
-
-### Login page
-
-!\[Login Page](./screenshots/sc2.png)
-
-### Login page with error
-
-!\[Login Page](./screenshots/sc3.png)
-
-### Register page
-
-!\[Register Page](./screenshots/sc4.png)
-
-### Dashboard
-
-!\[Dashboard](./screenshots/sc5.png)
-
-## 📁 Project Structure
-
-```
-auth-app-boot-react/
-│
-├── backend/                  # Spring Boot Backend
-│   ├── src/
-│   ├── pom.xml
-│   └── application.yml
-│
-├── frontend/                 # React + Vite Frontend
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.js
-│
-└── README.md
+```mermaid
+flowchart LR
+  A[Public Home /] --> B[Login / Signup]
+  B --> C[Spring Boot Auth API]
+  C --> D[JWT Access Token + Refresh Cookie]
+  D --> E[Zustand Persisted Auth State]
+  E --> F[Protected Dashboard /dashboard]
+  F --> G[Profile Section /dashboard/profile]
+  F --> H[401 Response]
+  H --> I[Axios Refresh Token Interceptor]
+  I --> D
 ```
 
-\---
+### 1. Public entry
 
-## ⚙️ Backend Setup (Spring Boot)
+The app opens on the landing page at `/`, which renders the futuristic home page. The navbar changes based on whether the user is logged in.
 
-### 🧩 Prerequisites
+### 2. Registration
 
-* Java 17+
-* Maven 3.9+
-* MySQL (or compatible database)
-* Git
+The signup page at `/signup` collects name, email, and password. It calls `POST /api/v1/auth/register` and then sends the user to `/login`.
 
-### 🧰 Steps to Run Backend
+### 3. Login
 
-1. Navigate to the backend folder:
+The login page at `/login` supports:
 
-```bash
-   cd backend
-   ```
+* email/password login
+* Google OAuth2 login
+* GitHub OAuth2 login
 
-2. Create a new database:
+Email/password login calls `POST /api/v1/auth/login`. On success, the backend returns:
 
-```sql
-   CREATE DATABASE auth\_app;
-   ```
+* access token
+* refresh token
+* user data
 
-3. Configure `application.yml`:
+The frontend stores the auth state in Zustand and persists it under `app_state`.
 
-```yaml
-   server:
-     port: 8081
+### 4. Auth state and request handling
 
-   spring:
-     application:
-       name: auth-backend
-     datasource:
-       url: jdbc:mysql://localhost:3306/auth\_app
-       username: root
-       password: root
-     jpa:
-       hibernate:
-         ddl-auto: update
-       show-sql: true
-       properties:
-         hibernate:
-           dialect: org.hibernate.dialect.MySQL8Dialect
+The frontend uses an Axios client with interceptors:
 
-   security:
-     jwt:
-       secret: ${JWT\_SECRET}
-       issuer: auth-backend
-       access-ttl-seconds: 900
-       refresh-ttl-seconds: 1209600
-       refresh-cookie-name: refresh\_token
-       cookie-secure: false
-       cookie-same-site: Lax
+* every request sends the access token as `Authorization: Bearer ...`
+* if the server returns `401`, the client automatically calls `POST /api/v1/auth/refresh`
+* after refresh, the new token and user data replace the old auth state
 
-     oauth2:
-       client:
-         registration:
-           google:
-             client-id: ${GOOGLE\_CLIENT\_ID}
-             client-secret: ${GOOGLE\_CLIENT\_SECRET}
-             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-             scope: \[email, profile]
-           github:
-             client-id: ${GITHUB\_CLIENT\_ID}
-             client-secret: ${GITHUB\_CLIENT\_SECRET}
-             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-             scope: \[user:email, read:user]
-   ```
+### 5. Protected dashboard
 
-4. Set environment variables:
+The `/dashboard` route is guarded by `Userlayout`. If the user is not logged in, they are redirected to `/login`.
 
-```bash
-   export JWT\_SECRET="your-random-long-secret"
-   export GOOGLE\_CLIENT\_ID="your-google-client-id"
-   export GOOGLE\_CLIENT\_SECRET="your-google-client-secret"
-   export GITHUB\_CLIENT\_ID="your-github-client-id"
-   export GITHUB\_CLIENT\_SECRET="your-github-client-secret"
-   ```
+The dashboard contains:
 
-5. Run the Spring Boot app:
+* `/dashboard` - overview page
+* `/dashboard/profile` - profile section
 
-```bash
-   mvn spring-boot:run
-   ```
+### 6. Profile section
 
-📍 Backend runs on **http://localhost:8081**
+The profile page shows the logged-in user's:
 
-\---
+* full name
+* email
+* provider
+* enabled status
 
-## 💻 Frontend Setup (React + Vite)
+It also includes UI actions for:
 
-### 🧩 Prerequisites
+* changing the profile picture
+* editing profile fields
+* changing password
+* deleting the account
 
-* Node.js 18+
-* npm / yarn / pnpm
+The edit and save controls are currently UI-driven and can be connected to backend update endpoints later.
 
-### ⚙️ Steps to Run Frontend
+### 7. Logout
 
-1. Navigate to frontend directory:
+Logout calls `POST /api/v1/auth/logout`, clears the refresh cookie on the backend, and removes the stored auth state on the frontend.
 
-```bash
-   cd frontend
-   ```
+## Frontend Routes
 
-2. Install dependencies:
+| Route | Screen | Notes |
+| --- | --- | --- |
+| `/` | Home | Public landing page |
+| `/login` | Login | Email/password + OAuth buttons |
+| `/signup` | Signup | User registration |
+| `/about` | About | Public info page |
+| `/services` | Services | Public info page |
+| `/dashboard` | Dashboard | Protected overview |
+| `/dashboard/profile` | Profile | Protected profile section |
+| `/oauth/success` | OAuth success | OAuth callback success screen |
+| `/oauth/failure` | OAuth failure | OAuth callback failure screen |
 
-```bash
-   npm install
-   ```
+## Backend API Endpoints
 
-3. Create `.env` file inside `frontend/`:
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/v1/auth/register` | Register a new user |
+| `POST` | `/api/v1/auth/login` | Login with email and password |
+| `POST` | `/api/v1/auth/refresh` | Refresh access token |
+| `POST` | `/api/v1/auth/logout` | Logout and revoke refresh token |
+| `GET` | `/api/v1/users/email/{email}` | Fetch the current user by email |
+| `POST` | `/api/v1/users` | Create user record |
+| `GET` | `/api/v1/users` | List users |
+| `PUT` | `/api/v1/users/{userId}` | Update user |
+| `DELETE` | `/api/v1/users/{userId}` | Delete user |
+| `GET` | `/api/v1/users/{userId}` | Admin-only user lookup |
 
-```bash
-   VITE\_BACKEND\_URL=http://localhost:8081
-   ```
+## Environment Variables
 
-4. Start development server:
+### Frontend
+
+* `VITE_API_BASE_URL` - backend API base URL, default `http://localhost:8083/api/v1`
+* `VITE_BASE_URL` - backend root URL for OAuth links, default `http://localhost:8083`
+
+### Backend
+
+* `DB_URL`
+* `DB_USERNAME`
+* `DB_PASSWORD`
+* `GOOGLE_CLIENT_ID`
+* `GOOGLE_CLIENT_SECRET`
+* `GITHUB_CLIENT_ID`
+* `GITHUB_CLIENT_SECRET`
+* `JWT_SECRET`
+* `FRONT_END_URL`
+* `FRONT_END_SUCCESS_REDIRECT`
+* `FRONT_END_FAILURE_REDIRECT`
+
+## Local Setup
+
+### Backend
 
 ```bash
-   npm run dev
-   ```
+cd auth-backend
+./mvnw spring-boot:run
+```
 
-📍 Frontend runs on **http://localhost:5173**
+On Windows:
 
-\---
+```bash
+cd auth-backend
+mvnw.cmd spring-boot:run
+```
 
-## 🔗 Authentication Flow
+The backend runs on port `8083` by default.
 
-1. **User Login (Email/Password):**
+### Frontend
 
-   * User logs in via frontend.
-   * Spring Boot backend verifies credentials.
-   * Returns JWT tokens (access + refresh).
-2. **OAuth Login (Google / GitHub):**
+```bash
+cd auth-front
+npm install
+npm run dev
+```
 
-   * Redirects to provider login page.
-   * On success, backend issues JWTs.
-   * React app stores tokens securely (cookie / memory).
-3. **Token Refresh:**
+The frontend runs on port `5173` by default.
 
-   * When access token expires, refresh token is used silently to generate a new one.
-4. **Logout:**
+## Notes
 
-   * Cookies/tokens are cleared; session invalidated.
-
-\---
-
-## 🔑 Example API Endpoints
-
-|Method|Endpoint|Description|
-|-|-|-|
-|`POST`|`/api/auth/login`|Login with username \& password|
-|`POST`|`/api/auth/register`|Register a new user|
-|`GET`|`/api/auth/me`|Get current logged-in user|
-|`GET`|`/oauth2/authorization/google`|Redirect to Google login|
-|`GET`|`/oauth2/authorization/github`|Redirect to GitHub login|
-|`POST`|`/api/auth/refresh`|Refresh access token|
-|`POST`|`/api/auth/logout`|Logout and clear tokens|
-
-\---
-
-## 🧠 Environment Variables Summary
-
-|Variable|Description|Example|
-|-|-|-|
-|`JWT\_SECRET`|Secret key for JWT|`random-long-secret`|
-|`GOOGLE\_CLIENT\_ID`|Google OAuth client ID|`xxxxx.apps.googleusercontent.com`|
-|`GOOGLE\_CLIENT\_SECRET`|Google OAuth secret|`xxxxxx`|
-|`GITHUB\_CLIENT\_ID`|GitHub OAuth client ID|`ghp\_xxxxx`|
-|`GITHUB\_CLIENT\_SECRET`|GitHub OAuth secret|`ghs\_xxxxx`|
-|`VITE\_BACKEND\_URL`|Backend URL for frontend|`http://localhost:8081`|
-
-\---
-
-## 🧰 Common Commands
-
-|Task|Command|
-|-|-|
-|Run backend|`mvn spring-boot:run`|
-|Run frontend|`npm run dev`|
-|Build frontend|`npm run build`|
-|Package backend|`mvn clean package`|
-|Run backend JAR|`java -jar target/auth-app.jar`|
-
-\---
-
-## 🧩 Deployment Tips
-
-* Build frontend for production:
+* The auth state is stored with Zustand persistence using the key `app_state`.
+* Refresh tokens are rotated on refresh.
+* The profile page currently focuses on display and UI actions, not a completed save API.
+* The home page is implemented in `auth-front/src/components/home/FuturisticAuthHome.tsx`.
 
 ```bash
   npm run build
