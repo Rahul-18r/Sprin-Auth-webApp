@@ -1,0 +1,20 @@
+# Build outputs
+auth-backend/target/
+auth-front/node_modules/
+auth-front/dist/
+target/
+dist/
+
+# Environment files
+.env
+auth-front/.env
+auth-backend/.env
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

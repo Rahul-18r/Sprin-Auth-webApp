@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: auth-app-backend
+  profiles:
+    active: dev
+
+
+server:
+  port: 8083
+
+security:
+  jwt:
+    secret: "z4F8mV9sQ2pB7hL6kR3xT5yW1nU0cZ7aP8oD4sF9gH2jK6lM3nV8bQ1rT5yU2iEP"
+    issuer: "api.substring.local"
+    access-ttl-seconds: 600
+    refresh-ttl-seconds: 86400
+    refresh-token-cookie-name: "refreshToken"
+    cookie-secure: false
+    cookie-http-only: true
+    cookie-same-site: lax
+    cookie-domain: localhost
