@@ -1,131 +1,37 @@
-# Auth App
+# Auth App — Spring Boot + React (Vite)
 
-> Developed by Rahul
+Clean, minimal, and secure authentication starter application.
 
-## Author
+Built by Rahul — this repository contains two projects:
 
-Rahul
+- `auth-backend` — Spring Boot (Java 17) authentication & user service
+- `auth-front` — React + TypeScript + Vite frontend
 
-## Runtime Versions
+---
 
-* Java 17
-* Spring Boot 3.5.7
-* MySQL 8.x-compatible local database
+## Highlights
 
-## Overview
+- Email/password registration and JWT-based login
+- Refresh-token rotation stored server-side (HTTP-only cookie)
+- Google & GitHub OAuth2 sign-in (handled by backend)
+- Protected frontend dashboard and profile pages
+- Simple, extendable code structure for production-ready auth
 
-This is a full-stack authentication app built with a React + Vite frontend and a Spring Boot backend. It supports email/password registration and login, Google and GitHub OAuth2 login, JWT-based sessions, refresh-token rotation, and a protected dashboard with a profile section.
+---
 
-The project is split into two apps:
+## Quick Start
 
-* [auth-backend](auth-backend)
-* [auth-front](auth-front)
+Prerequisites: Java 17, Maven, Node 16+ (npm), MySQL (optional for local DB).
 
-## Actual Project Flow
+Backend (dev):
 
-```mermaid
-flowchart TB
-  subgraph Public[Public Area]
-    H[Home /]
-    S[Signup /signup]
-    L[Login /login]
-    A[About /about]
-    V[Services /services]
-  end
-
-  subgraph Frontend[React Frontend]
-    N[Navbar with auth-aware links]
-    ST[Zustand auth store<br/>persisted as app_state]
-    AX[Axios client with request + response interceptors]
-    O1[OAuth success /oauth/success]
-    O2[OAuth failure /oauth/failure]
-  end
-
-  subgraph Backend[Spring Boot Backend]
-    R1[POST /api/v1/auth/register]
-    R2[POST /api/v1/auth/login]
-    R3[POST /api/v1/auth/refresh]
-    R4[POST /api/v1/auth/logout]
-    U1[GET /api/v1/users/email/{email}]
-    U2[User + refresh-token persistence]
-    J1[JWT access token]
-    J2[Refresh cookie]
-  end
-
-  subgraph Protected[Protected Area]
-    D[Dashboard /dashboard]
-    P[Profile /dashboard/profile]
-  end
-
-  H --> N
-  S --> R1
-  L --> R2
-  L --> O1
-  L --> O2
-  R1 --> U2
-  R2 --> J1
-  R2 --> J2
-  R3 --> J1
-  R3 --> J2
-  R4 --> J2
-  J1 --> ST
-  J2 --> AX
-  ST --> AX
-  AX --> D
-  D --> P
-  AX --> R3
-  U1 --> P
-  N --> D
-```
-
-## Frontend Routes
-
-| Route | Screen | Notes |
-| --- | --- | --- |
-| `/` | Home | Public landing page |
-| `/login` | Login | Email/password + OAuth buttons |
-| `/signup` | Signup | User registration |
-| `/about` | About | Public info page |
-| `/services` | Services | Public info page |
-| `/dashboard` | Dashboard | Protected overview |
-| `/dashboard/profile` | Profile | Protected profile section |
-| `/oauth/success` | OAuth success | OAuth callback success screen |
-| `/oauth/failure` | OAuth failure | OAuth callback failure screen |
-
-## Profile Section
-
-The profile page is the main user settings area. It currently includes:
-
-* Avatar display
-* Editable profile UI state
-* Full name field
-* Email field
-* Provider field
-* Enabled status field
-* Change password action
-* Delete account action
-
-The page is wired to the auth store, so it reads the current logged-in user directly from Zustand.
-
-## Local Setup
-
-### Backend
-
-```bash
+```powershell
 cd auth-backend
-./mvnw spring-boot:run
+mvnw.cmd spring-boot:run    # Windows
+# or on Unix: ./mvnw spring-boot:run
 ```
 
-On Windows:
-
-```bash
-cd auth-backend
-mvnw.cmd spring-boot:run
-```
-
-The backend runs on port `8083` by default.
-
-### Frontend
+Frontend (dev):
 
 ```bash
 cd auth-front
@@ -133,20 +39,63 @@ npm install
 npm run dev
 ```
 
-The frontend runs on port `5173` by default.
+By default the backend listens on `http://localhost:8083` and the frontend on `http://localhost:5173`.
 
-## Notes
+---
 
-* The auth state is stored with Zustand persistence using the key `app_state`.
-* Refresh tokens are rotated on refresh.
-* The profile page currently focuses on display and UI actions, not a completed save API.
-* The home page is implemented in `auth-front/src/components/home/FuturisticAuthHome.tsx`.
+## Architecture (short)
 
-## Recent Changes (2026-05-26)
+- Frontend holds the short-lived access token in memory and user profile in a Zustand store.
+- Refresh tokens are persisted to the DB and rotated by the backend; the refresh token itself is sent as an HTTP-only cookie.
+- Backend validates JWT access tokens on each request using a `JwtAuthenticationFilter` and enforces method/security rules via Spring Security.
 
-- Added a new backend endpoint `GET /api/v1/users/{userId}/stats` which returns JSON: `{ "totalLogins": number, "securityScore": number, "activeSessions": number }`.
-- Frontend now fetches the stats and renders them on the dashboard; see `auth-front/src/pages/users/Userhome.tsx` and `auth-front/src/services/AuthService.ts`.
-- Backend implements `UserStats` DTO and counts refresh-token records to compute `totalLogins` and `activeSessions`; also adds a simple heuristic for `securityScore`.
-- Security config updated so authenticated users can fetch their own `/users/{id}/stats` endpoint; admin-restricted routes remain protected.
+---
 
-Build note: Backend compiled successfully after these changes.
+## Important Endpoints
+
+Auth:
+
+- `POST /api/v1/auth/register` — register new user
+- `POST /api/v1/auth/login` — login (email/password)
+- `POST /api/v1/auth/refresh` — rotate refresh token and issue new access token
+- `POST /api/v1/auth/logout` — revoke refresh token and clear cookie
+
+User / Dashboard:
+
+- `GET /api/v1/users/email/:email` — fetch user profile by email
+- `GET /api/v1/users/{userId}/stats` — (new) returns JSON with `totalLogins`, `securityScore`, `activeSessions` (authenticated users can fetch their own stats)
+
+Admin:
+
+- `GET /api/v1/users` — list users (admin)
+- `PUT /api/v1/users/{userId}` — update user (admin)
+- `DELETE /api/v1/users/{userId}` — delete user (admin)
+
+---
+
+## Recent changes (2026-05-26)
+
+- Added backend endpoint `GET /api/v1/users/{userId}/stats` and corresponding `UserStats` DTO.
+- Implemented service logic that counts refresh tokens for `totalLogins` and `activeSessions` and provides a basic `securityScore` heuristic.
+- Frontend now calls `getUserStats` and renders dynamic dashboard tiles (see `auth-front/src/pages/users/Userhome.tsx`).
+- Updated security config to allow authenticated users to fetch their own stats while keeping admin routes protected.
+
+---
+
+## Developer Notes
+
+- The mermaid diagram in older READMEs used braces in node labels which can break some renderers — preferred style is `:param` or plain text labels.
+- If you encounter `403 Forbidden` calling the stats endpoint, ensure:
+  1. The backend is running on `http://localhost:8083`.
+ 2. The frontend user is signed in and the access token is available.
+
+---
+
+## Where to look
+
+- Backend main files: `auth-backend/src/main/java/...` — `SecurityConfig`, `AuthController`, `JwtAuthenticationFilter`, `OAuth2SuccessHandler`.
+- Frontend main files: `auth-front/src` — `services/AuthService.ts`, `pages/users/Userhome.tsx`, `config/apiClient.ts`.
+
+---
+
+If you want, I can add a repository badge, a short demo GIF, or a separate `CONTRIBUTING.md`. Which would you prefer next?
