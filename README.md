@@ -110,10 +110,10 @@ sequenceDiagram
 
     FE->>API: POST /api/v1/auth/login (credentials)
     API->>DB: validate user, create refresh token row
-    API-->>FE: 200 OK { accessToken } + set-cookie refresh
-    FE->>API: GET /api/v1/users/{id}/stats (Authorization: Bearer ...)
+    API-->>FE: 200 OK [ accessToken ] + set-cookie refresh
+    FE->>API: GET /api/v1/users/:id/stats (Authorization: Bearer ...)
     API->>DB: count refresh tokens for user
-    API-->>FE: 200 OK { totalLogins, securityScore, activeSessions }
+    API-->>FE: 200 OK [ totalLogins, securityScore, activeSessions ]
 ```
 
 ---
@@ -169,10 +169,10 @@ This section expands the previously compact flow into several focused flows so y
 
 ```mermaid
 flowchart LR
-  Public[Public pages: Home, Login, Signup]
-  Frontend[Frontend (React + Vite)]
-  Backend[Backend (Spring Boot)]
-  DB[Database (MySQL)]
+  Public["Public pages: Home, Login, Signup"]
+  Frontend["Frontend (React + Vite)"]
+  Backend["Backend (Spring Boot)"]
+  DB["Database (MySQL)"]
 
   Public --> Frontend
   Frontend --> Backend
@@ -188,11 +188,11 @@ sequenceDiagram
     participant DB as Database
 
     Note over FE: User submits credentials (email + password)
-    FE->>API: POST /api/v1/auth/login { email, password }
+    FE->>API: POST /api/v1/auth/login [ email, password ]
     API->>DB: verify user (findByEmail + password check)
     API->>DB: create RefreshToken row
-    API-->>FE: 200 OK, { accessToken } + Set-Cookie: refresh
-    Note over FE: Store accessToken in memory; cookie is httpOnly
+    API-->>FE: 200 OK, [ accessToken ] + Set-Cookie: refresh
+    Note over FE: Store accessToken in memory, cookie is httpOnly
 ```
 
 Files: `auth-backend/src/main/java/.../controllers/AuthController.java`, `.../services/impl/JwtService.java`, `.../entities/RefreshToken.java`.
@@ -205,12 +205,12 @@ sequenceDiagram
     participant API as Backend
     participant DB as Database
 
-    FE->>API: Protected request w/ Authorization: Bearer <expired>
+    FE->>API: Protected request w/ Authorization: Bearer [expired]
     API-->>FE: 401 Unauthorized
     FE->>API: POST /api/v1/auth/refresh (cookie sent automatically)
     API->>DB: validate refresh token, check revoked/expiry
     API->>DB: revoke old refresh token, create new one
-    API-->>FE: 200 OK { accessToken } + Set-Cookie: new refresh
+    API-->>FE: 200 OK [ accessToken ] + Set-Cookie: new refresh
     FE->>API: original request retried with new token
 ```
 
@@ -224,12 +224,12 @@ sequenceDiagram
     participant API as Backend
     participant OAuth as Provider (Google/GitHub)
 
-    Browser->>API: GET /oauth2/authorize/{provider}
+    Browser->>API: GET /oauth2/authorize/:provider
     API->>OAuth: Redirect user to provider consent page
-    OAuth-->>Browser: Redirect back to API /login/oauth2/code/{provider} with code
-    Browser->>API: GET /login/oauth2/code/{provider}?code=...
+    OAuth-->>Browser: Redirect back to API /login/oauth2/code/:provider with code
+    Browser->>API: GET /login/oauth2/code/:provider?code=...
     API->>OAuth: Exchange code for user info
-    API->>DB: Create or fetch local User; create refresh-token row
+    API->>DB: Create or fetch local User, create refresh-token row
     API-->>Browser: Redirect to frontend `/oauth/success` (sets refresh cookie + token)
 ```
 
@@ -239,10 +239,10 @@ Files: `auth-backend/src/main/java/.../config/OAuth2SuccessHandler.java`, Spring
 
 ```mermaid
 flowchart LR
-  UserDB[RefreshToken table]
-  Service[UserService.getUserStats]
-  API[UserController.getUserStats]
-  Frontend[Userhome.tsx]
+  UserDB["RefreshToken table"]
+  Service["UserService.getUserStats"]
+  API["UserController.getUserStats"]
+  Frontend["Userhome.tsx"]
 
   UserDB --> Service
   Service --> API
